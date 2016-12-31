@@ -1,5 +1,5 @@
-REBAR=rebar
-REBAR_COMPILE=$(REBAR) get-deps compile
+REBAR=rebar3
+REBAR_COMPILE=$(REBAR) compile
 PLT=dialyzer\sqlite3.plt
 
 all: compile
@@ -8,7 +8,7 @@ compile: sqlite3.dll sqlite3.lib
 	$(REBAR_COMPILE)
 
 debug: sqlite3.dll sqlite3.lib
-	$(REBAR_COMPILE) -C rebar.debug.config
+	REBAR_CONFIG=rebar.debug.config $(REBAR_COMPILE)
 
 tests: compile sqlite3.dll
 	cp sqlite3.dll priv
@@ -34,7 +34,7 @@ static: compile
 		(dialyzer --plt $(PLT) -r ebin)
 
 cross_compile: clean
-	$(REBAR_COMPILE) -C rebar.cross_compile.config
+	REBAR_CONFIG=rebar.cross_compile.config $(REBAR_COMPILE)
 
 sqlite3.dll: sqlite3_amalgamation\sqlite3.c sqlite3_amalgamation\sqlite3.h
 	cl /O2 sqlite3_amalgamation\sqlite3.c /Isqlite3_amalgamation /link /dll /out:sqlite3.dll

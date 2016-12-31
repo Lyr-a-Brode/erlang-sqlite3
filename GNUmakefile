@@ -1,21 +1,21 @@
-REBAR=./rebar
-REBAR_DEBUG=$(REBAR) -C rebar.debug.config
-REBAR_COMPILE=$(REBAR) get-deps compile
-REBAR_DEBUG_COMPILE=$(REBAR_DEBUG) get-deps compile
+REBAR=./rebar3
+REBAR_DEBUG=REBAR_CONFIG=rebar.debug.config $(REBAR)
+REBAR_COMPILE=$(REBAR) compile
+REBAR_DEBUG_COMPILE=$(REBAR_DEBUG) compile
 LAST_CONFIG:=$(shell cat config.tmp)
 PLT=dialyzer/sqlite3.plt
 
 all: config_normal compile
 
 debug: config_debug
-	$(REBAR_DEBUG_COMPILE) 
+	$(REBAR_DEBUG_COMPILE)
 
 compile:
 	$(REBAR_COMPILE)
-	
-test:
-	$(REBAR_COMPILE) eunit
 
+test:
+	$(REBAR_COMPILE)
+	$(REBAR) eunit
 clean:
 	-rm -rf deps ebin priv/*.so doc/* .eunit/* c_src/*.o config.tmp
 
@@ -25,7 +25,7 @@ docs:
 static: config_debug
 	$(REBAR_DEBUG_COMPILE)
 ifeq ($(wildcard $(PLT)),)
-	dialyzer --build_plt --apps kernel stdlib erts --output_plt $(PLT) 
+	dialyzer --build_plt --apps kernel stdlib erts --output_plt $(PLT)
 else
 	dialyzer --plt $(PLT) -r ebin
 endif
