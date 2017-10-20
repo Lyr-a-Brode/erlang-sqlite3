@@ -1,43 +1,64 @@
-REBAR=rebar3
+REBAR=./rebar3
+REBAR_DEBUG=REBAR_CONFIG=rebar.debug.config $(REBAR)
 REBAR_COMPILE=$(REBAR) compile
-PLT=dialyzer\sqlite3.plt
+REBAR_DEBUG_COMPILE=$(REBAR_DEBUG) compile
+LAST_CONFIG:=$(shell cat config.tmp)
+PLT=dialyzer/sqlite3.plt
 
-all: compile
+all: config_normal compile
 
-compile: sqlite3.dll sqlite3.lib
+debug: config_debug
+	$(REBAR_DEBUG_COMPILE)
+
+compile:
 	$(REBAR_COMPILE)
 
-debug: sqlite3.dll sqlite3.lib
-	REBAR_CONFIG=rebar.debug.config $(REBAR_COMPILE)
-
-tests: compile sqlite3.dll
-	cp sqlite3.dll priv
-	rebar skip-deps=true eunit
-
+test:
+	$(REBAR_COMPILE)
+	$(REBAR) eunit
 clean:
-	if exist deps del /Q deps
-	if exist ebin del /Q ebin
-	if exist priv del /Q priv
-	if exist doc\* del /Q doc\*
-	if exist .eunit del /Q .eunit
-	if exist c_src\*.o del /Q c_src\*.o
-	if exist dialyzer del /Q dialyzer
-	if exist sqlite3.* del /Q sqlite3.*
+	-rm -rf deps ebin priv/*.so doc/* .eunit/* c_src/*.o config.tmp
 
-docs: compile
-	rebar doc
+docs:
+	$(REBAR_COMPILE) doc
 
-static: compile
-	@if not exist $(PLT) \
-		(mkdir dialyzer & dialyzer --build_plt --apps kernel stdlib erts --output_plt $(PLT)); \
-	else \
-		(dialyzer --plt $(PLT) -r ebin)
+static: config_debug
+	$(REBAR_DEBUG_COMPILE)
+ifeq ($(wildcard $(PLT)),)
+	dialyzer --build_plt --apps kernel stdlib erts --output_plt $(PLT)
+else
+	dialyzer --plt $(PLT) -r ebin
+endif
 
-cross_compile: clean
-	REBAR_CONFIG=rebar.cross_compile.config $(REBAR_COMPILE)
+cross_compile: config_cross
+	$(REBAR_COMPILE) -C rebar.cross_compile.config
 
-sqlite3.dll: sqlite3_amalgamation\sqlite3.c sqlite3_amalgamation\sqlite3.h
-	cl /O2 sqlite3_amalgamation\sqlite3.c /Isqlite3_amalgamation /link /dll /out:sqlite3.dll
+valgrind: config_debug
+	$(REBAR_DEBUG_COMPILE)
+	valgrind --tool=memcheck --leak-check=yes --num-callers=20 ./test.sh
 
-sqlite3.lib: sqlite3.dll
-	lib /out:sqlite3.lib sqlite3.obj
+ifeq ($(LAST_CONFIG),normal)
+config_normal: ;
+else
+config_normal: clean
+	rm -f config.tmp
+	echo "normal" > config.tmp
+endif
+
+ifeq ($(LAST_CONFIG),debug)
+config_debug: ;
+else
+config_debug: clean
+	rm -f config.tmp
+	echo "debug" > config.tmp
+endif
+
+ifeq ($(LAST_CONFIG),cross)
+config_cross: ;
+else
+config_cross: clean
+	rm -f config.tmp
+	echo "cross" > config.tmp
+endif
+
+.PHONY: all compile test clean docs static valgrind config_normal config_debug config_cross
