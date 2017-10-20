@@ -29,6 +29,7 @@ rel/example_project
 .concrete/DEV_MODE
 .rebar
 .idea/
-c_src/sqlite3_drv.d
+c_src/*.d
+sqlite3_amalgamation/*.d
 rebar.lock
 sqlite3.iml
