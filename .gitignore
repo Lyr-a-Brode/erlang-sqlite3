@@ -1,12 +1,7 @@
-# backups and VCS
-.svn
-*/.svn
-*~
-*.swp
-*.orig
 # build outputs
 .rebar/
 rebar.cross_compile.config
+_build/
 config.tmp
 *.pdb
 *.beam
@@ -23,5 +18,17 @@ TEST*.xml
 *.dll
 *.o
 *.so
-# crash dump
+### Erlang template
+.eunit
+deps
+*.o
+*.beam
+*.plt
 erl_crash.dump
+rel/example_project
+.concrete/DEV_MODE
+.rebar
+.idea/
+c_src/sqlite3_drv.d
+rebar.lock
+sqlite3.iml
